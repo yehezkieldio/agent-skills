@@ -1,105 +1,101 @@
 ---
 name: content-writing-composition
-description: This skill should be used for any substantial piece of writing meant to read as authored, not generated — a technical article ("write an article about", "draft a Medium/dev.to post", "turn this feature into an article", "write it up in my style"), a conceptual or opinion essay, an academic or research-adjacent writeup, or any other long-form composition where matching a real voice and avoiding formulaic AI prose patterns matters more than just conveying information. Applies to any codebase or subject matter — grounds technical pieces in real code and git history from the current project, calibrates voice against the author's own published corpus, and screens every draft against a running checklist of formulaic-writing tells.
-version: 0.2.0
+description: This skill should be used for any substantial piece of writing meant to read as authored, not generated — drafting a technical article ("write an article about", "draft a Medium post", "write it up in my style"), a conceptual or opinion essay, or a formal academic manuscript/thesis chapter, AND reviewing, auditing, or revising an existing piece of this kind ("review this article", "audit this manuscript for AI-writing tells", "apply this feedback to my draft", "check this piece against the checklist", "fix these issues without asking me first"). Applies to any codebase, subject matter, or language, and to pieces this skill didn't originally draft — grounds technical pieces in real code and git history, calibrates voice against a real author's corpus where one exists, follows an institution's own guideline where one governs, and screens every draft or existing piece against a running checklist of formulaic-writing tells.
+version: 0.4.0
 ---
 
 # Content Writing & Composition
 
-Turn a real subject (an engineering decision found in a codebase, an idea worth arguing, a body of research) into a finished piece of writing that reads as authored by this specific person, not by a model executing an outline. The two failure modes this skill exists to prevent, regardless of what kind of piece is being written: inventing detail that isn't grounded in the real source material, and defaulting to generic "well-written" prose instead of the author's actual voice.
+Turn a real subject (an engineering decision found in a codebase, an idea worth arguing, a body of research) into a finished piece of writing that reads as authored by a specific person or bound by a specific institutional register, not produced by a model executing a generic outline. Two failure modes recur across every composition type this skill covers: inventing detail that isn't grounded in real source material, and defaulting to generic "well-written" prose instead of the voice or register the piece actually needs.
 
-This skill is decomposed by **composition type** (technical article, conceptual essay, academic writeup, and whatever else gets added later) because the types diverge early and structurally — whether code or citations appear at all, whether real names stay in or get generalized away, whether sections follow a chronological arc, a concept-by-concept structure, or a formal argument structure. The workflow below is universal; the type-specific spec in `references/writing-types.md` fills in the parts that differ.
+This skill is decomposed by **composition type**, and each type lives in its own file under `references/` so that picking one never pulls another type's content into context — asking for a conceptual essay should never load academic-thesis-specific guidance, and vice versa. `references/type-index.md` is the dispatcher: read it first, pick exactly one type (or, for a genuine cross-mix request, the small set the index says to combine), then read only that type's file. The workflow below is universal across every type; each type file fills in the parts that differ (structure, evidence policy, sanitization, closing convention).
+
+## Two entry points: drafting or reviewing
+
+This skill covers two distinct jobs that share the same type files and the same checklist, but take a different path through this document:
+
+- **Drafting a new piece.** Follow the Workflow below in order, Step 0 through Step 6.
+- **Reviewing, auditing, or revising a piece that already exists** — including one this skill didn't originally draft. Still do Step 0 (identify the type, since it governs which checklist calibration applies), then go straight to `references/review-and-audit.md`, which covers deciding whether the task is report-only or fix-authorized, respecting a project's own existing style guide, delegating a large audit to a subagent, applying someone else's written critique, and running a holistic pass distinct from a mechanical checklist pass.
+
+If it's unclear which entry point a request wants, ask — the two modes carry very different risk profiles, especially for a piece with real external stakes.
 
 ## Workflow
 
-Follow these steps in order. Do not skip step 2 even when the subject matter is already well understood — voice calibration is the part most likely to be skipped and it is the part that most determines whether the result feels authored or generated.
+Follow these steps in order for a new piece. Do not skip Step 2 for a type that has it — voice calibration is the step most likely to be skipped and the one that most determines whether a result feels authored or generated.
 
 ### Step 0: Pick the composition type
 
-Read `references/writing-types.md` and pick a type before doing anything else — it's a registry, not a fixed list, so a request that clearly wants a shape no current type covers is a signal to add a new type there (see its template) rather than force-fitting the closest existing one. Currently registered: **Narrative Feature Writeup** (a technical story with a chronological arc), **Conceptual Essay** (an opinionated, concept-by-concept infodump with no chronological arc), and any further types appended over time (e.g. an academic/research writeup would need its own entry for citation policy, formal argument structure, and register — add it there rather than improvising inline the first time it's actually requested).
+Read `references/type-index.md` and pick a type before doing anything else. It is a registry, not a fixed list — a request that clearly wants a shape no current type covers is a signal to add a new type there (see `references/type-template.md`) rather than force-fitting the closest existing one. Guessing wrong here means redoing a full draft, not a paragraph, so ask if the signals are ambiguous.
 
-Default to **Narrative Feature Writeup** unless the request explicitly rules out a story/tutorial/case-study/postmortem/autobiographical shape, or asks for something organized around ideas and opinions rather than a chronological arc, in which case use **Conceptual Essay**. If neither reading is clearly right, ask — guessing wrong here means redoing the whole draft, not just a paragraph.
-
-Once picked, the type governs: the macro-structure in place of a generic outline, the evidence/citation policy, the sanitization level, and the closing convention. Steps 1 and 2 below apply to every type; steps 3 and 4 point back to the type's own spec for anything that differs.
+Once picked, read only that one type file (e.g. `references/type-conceptual-essay.md`). It governs the macro-structure, the evidence/citation policy, the sanitization level, and the closing convention for the rest of this workflow.
 
 ### Step 1: Ground the content in real source material
 
-Before writing a single sentence, establish what actually happened or what actually exists. For a codebase-grounded piece (technical article or conceptual essay):
+Before writing a single sentence, establish what actually happened or what actually exists, using whatever counts as real evidence for the chosen type (see that type's own **Grounding** section — git history and diffs for a codebase-grounded piece, a verified citation or dataset for an academic one). For a codebase-grounded piece specifically:
 
 - Read the real source files involved, not a paraphrase from memory.
-- Run `git log --reverse --format='%ad %h %s' --date=short -- <paths>` to get the true chronological order of changes. Do not trust a plain `git log` (newest-first) without checking direction, and filter out unrelated noise (checkpoint commits, unrelated refactors) before treating the order as a narrative.
-- Pull the actual diffs of the commits that matter (`git show <sha> -- <path>`) so quoted code and described bugs are the real thing, not a plausible reconstruction.
-- If a piece needs more grounding material than what's already been established in conversation (e.g. pushing a conceptual essay's word count up with a genuinely new section rather than padding existing ones), read further into the codebase specifically looking for mechanisms not already used, rather than stretching one mechanism across multiple sections. A subagent search is often the right tool for this when the codebase is large — brief it with the mechanisms already used so it doesn't rediscover the same ones.
-- Never fabricate a bug, a metric, a timeline, or a citation. If a detail isn't recoverable from the code, the history, or a real source, leave it out or ask.
+- Run `git log --reverse --format='%ad %h %s' --date=short -- <paths>` for the true chronological order — a plain `git log` is newest-first and easy to misread as a narrative in the wrong direction.
+- Pull the actual diffs of commits that matter (`git show <sha> -- <path>`) so quoted code and described bugs are the real thing.
 
-For an academic or research-adjacent piece, the equivalent grounding is real citations and verified claims — never invent a source, a study result, or a statistic that can't be traced back to something real.
+Never fabricate a bug, a metric, a timeline, or a citation, for any type. If a piece needs more grounding material than what's already established (e.g. a long piece's length needs to grow with a genuinely new section, not padding), go find more real material — a subagent search is often the right tool once the source is large; brief it with what's already been used so it doesn't rediscover the same ground.
 
-### Step 2: Calibrate voice against the author's own corpus, not a generic standard
+### Step 2: Calibrate voice against a real corpus, or skip it where there isn't one
 
-The author's corpus lives on Medium, fetched via the RSS feed at `https://medium.com/feed/@yehezkieldio` (dev.to is a rare mirror, not the primary source — don't default to it). Fetch the feed first to see the current list of published pieces, then fetch 1–3 of the actual stories (prioritize ones closest in subject matter to the new article, e.g. a systems/Rust piece for another systems piece). Request **verbatim quotes**, not a summary — a summary of "the tone is conversational yet technically authoritative" is useless for imitation; the actual sentences are not. Specifically request:
+Some types have no personal voice to calibrate (check the type file's **Tone** section — an Academic/Thesis Writeup targets an institution's formal register, not an author's corpus, and skips this step entirely). For every type that does calibrate against a corpus:
 
-- The exact paragraphs before the first section heading, in full and in order (this reveals the intro shape: how many paragraphs, what each one does).
-- A handful of section headings verbatim, to see the real ratio of descriptive-technical vs. playful/irreverent headings — don't assume it's "make every heading a joke" or "make every heading descriptive" without checking.
-- A few full paragraphs mid-article, to see actual sentence rhythm and paragraph shape.
-- The closing paragraph(s).
-
-Extract concrete, falsifiable patterns from this (see `references/style-corpus.md` for how to structure the analysis and what to look for). Do not proceed to drafting on a vibe-based impression of "technical and punchy" — that produces generic prose that merely sounds technical.
+Fetch the target author's own published work and request **verbatim quotes**, not a summary: the exact paragraphs before the first heading, a handful of section headings, a few full mid-piece paragraphs, and the closing. By default, when no other author is specified, the target is this skill's own author, whose corpus lives on Medium at the RSS feed `https://medium.com/feed/@yehezkieldio`. This is a default, not a hard-coded assumption — when a piece is being written for or as someone else, calibrate against that person's own published corpus instead, fetched from wherever it actually lives (their own Medium feed, a personal blog, a different platform entirely). Extract concrete, falsifiable patterns from whichever corpus applies (see `references/style-corpus.md` for the structure). Drafting from a vibe-based impression of "technical and punchy" produces generic prose that merely sounds like the target voice.
 
 ### Step 3: Find the type's central sentence
 
-For **Narrative Feature Writeup**: check whether the author's other pieces open by reframing the mundane problem as a sharper abstraction early (e.g., "this is fundamentally a compression problem," "a distributed systems problem masquerading as a chat bot"). If that's a pattern in the corpus, the new article needs its own version: one sentence, stated early, that every subsequent section becomes a *consequence* of rather than a separate topic. Find this before outlining sections — it determines the order sections should appear in (the sentence that unlocks the rest of the argument goes near the front, not wherever it was chronologically discovered).
-
-For **Conceptual Essay**: find the central tension the whole piece orbits (e.g. "small infrastructure does not produce small software") the same way — before outlining the per-concept sections in `references/writing-types.md`, since it determines which concept opens the piece and which reads as a consequence of which.
-
-For a future academic/research type: the equivalent is the thesis or research question stated early enough that every section reads as evidence toward it, not a separate topic.
+Most types need one sentence, found before outlining sections, that the rest of the piece becomes a *consequence* of rather than a separate topic (a reframe for a narrative piece, a central tension for an essay, a precisely-stated problem statement for an academic piece with no single "reframe" to find). See the type file's own guidance for what this looks like for the chosen type — the exact shape differs enough between types that it isn't a universal step.
 
 ### Step 4: Draft to a local file, never publish directly
 
-Write the draft to a local file in the working directory (e.g. `ARTICLE.md`), not to any publishing tool, unless the user explicitly asks to post it. Structure the piece according to the chosen type's spec in `references/writing-types.md` (opening shape, section pattern, evidence/code/citation policy, closing convention) — don't default to the narrative hook → reframe → consequences shape if the conceptual-essay type was chosen, or vice versa. See `references/anti-formulaic-writing.md` before writing a single paragraph, and re-check the draft against it before presenting.
+Write the draft to a local file (e.g. `ARTICLE.md`), not to any publishing tool, unless explicitly asked to post it. Structure the piece exactly per the chosen type's spec — don't default to one type's shape when another was picked. Read `references/anti-formulaic-writing.md` before writing a single paragraph, and re-check the finished draft against it before presenting; a type file may narrow how that checklist applies (an Academic/Thesis Writeup treats certain "formulaic-looking" structures as required genre convention, not tells — see that type file).
 
-Sanitize identifying details per the chosen type's sanitization policy (light for Narrative Feature Writeup, heavy for Conceptual Essay — see `references/writing-types.md`). Never mention unrelated private material (internal docs, other codebases, academic work) even in passing, regardless of type — this is a public-facing artifact.
+Sanitize identifying details per the chosen type's own sanitization policy. Never mention unrelated private material (internal docs, other codebases, someone else's academic work) even in passing, regardless of type.
 
 ### Step 5: Apply revisions surgically
 
-When given revision feedback, distinguish between "fix this specific thing" and "rewrite it all." If the user quotes exact lines and says what's wrong with them, treat that as the scope — fix those lines and anything structurally downstream of them, don't take it as license to re-architect the whole piece. Only do a full rewrite when explicitly asked for one. When the user provides a long analytical critique (e.g., comparing against their other published work), read it for the *concrete, actionable* instructions inside it and apply those; don't treat the analysis prose itself as something to imitate or echo back.
+Distinguish "fix this specific thing" from "rewrite it all." If revision feedback quotes exact lines and says what's wrong, treat that as the scope — fix those lines and anything structurally downstream, not license to re-architect the whole piece. Only do a full rewrite when explicitly asked. When feedback is a long analytical critique, extract the *concrete, actionable* instructions inside it rather than imitating the critique's own prose style. For a revision pass involved enough to need deciding audit scope, delegating a large read, or reconciling a critique against an earlier stated requirement, see `references/review-and-audit.md` — the same file that governs reviewing a piece that wasn't freshly drafted in this session.
 
 ### Step 6: Deliver platform metadata separately from the body
 
-If asked for a subtitle and/or tags, give them as a short separate answer, not folded into the article file itself unless the user asks for them in the file.
-
-**Cover/inline images:** if an image is going in at all, it belongs before the title/subtitle block (classic Medium pattern: title → subtitle → image → opening paragraph), never dropped mid-opening — an image between the hook and its continuation breaks the momentum the opening was built to have. For a Conceptual Essay especially, ask whether a generic stock photo is worth including at all; an abstract systems piece often reads better with no image than with a mismatched one chosen just to satisfy a template.
-
-**Subtitle (Medium dek):** this is not the article's opening line and not a marketing-style summary — it's a distinct, deliberately crafted one-liner shown under the title on the profile/feed view. The real pattern, confirmed from the author's own Medium home:
-
-> "When async tasks panic and runtimes die, your subprocess guard is the last code that runs. Make it count. (And watch out for ^C.)"
-> "Building a fail-open deduplication cache in Rust with batched writes, exponential backoff, and graceful degradation."
-> "Recursive diff chunking, token-aware compression, and why solving your own friction beats general-purpose mediocrity."
-
-The shape is usually one of two things: (a) a comma-separated list of the concrete techniques/mechanisms in the piece, closed with a wry "why X beats/is Y" thesis clause, or (b) a short two-sentence beat — a plain statement of what happened, then an imperative or a parenthetical aside that undercuts it slightly. Don't reuse the article's actual first sentence as the subtitle — draft a new, tighter line in one of these two shapes, anchored on the piece's central reframe (the one-sentence claim from Step 3), not a generic feature list.
-
-**Tags:** 5 tags, ordinary lowercase topic/technology words (language, protocol/concept, platform, discipline) — not hashtags, not marketing phrases. Base them on what the piece is actually about (a systems piece gets the language + the specific mechanism + the broader discipline, e.g. `typescript`, `sse`, `webdev`, `softwaredesign`, `nextjs`), not a generic SEO list.
+If asked for a subtitle, tags, or cover-image placement, answer separately from the article file unless asked to fold them in. See `references/platform-metadata.md` for the subtitle shape, tag conventions, and image-placement rules, and `examples/subtitle-patterns.md` for verbatim confirmed examples.
 
 ## Common mistakes to avoid
 
-- Skipping Step 0 and defaulting to the Narrative Feature Writeup shape out of habit, including code and real names in a piece that asked to be a Conceptual Essay (or the reverse: writing a code-free abstract essay when the request wanted a concrete, code-backed writeup). Check the signals in `references/writing-types.md` before outlining.
-- Stating a strong claim as an absolute about a whole category of technology or practice ("none of it is available to read," "external infrastructure is opaque") when the real claim only holds along a narrower line. A senior reader will have the one counterexample ready (an open-source broker, a managed service that exposes internals, a database with its own opaque internals) and use it to dismiss the entire point, not just the overstated part. Find what the claim is actually about before finalizing it — see "Claims and pushback" under the Conceptual Essay type in `references/writing-types.md`.
-- For a Conceptual Essay specifically: naming the subject "a style" once is fine, but repeatedly writing "this style does X" / "this style treats Y as Z" turns the piece into commentary about itself instead of a direct description of the engineering. See "Avoid naming the subject as 'a style'" under the Conceptual Essay type in `references/writing-types.md`.
-- Drafting from a generic outline (even a good one) before fetching and studying the author's real corpus. Outline-first produces structure that has to be torn down and rebuilt once the real voice is checked. Study first.
-- Meta-narrative throat-clearing about the article itself ("what follows is...", "this piece will cover...", "this is an examination of...", "this is a story about..."). Don't announce the piece before writing it — jump straight into the subject matter, and let the reader infer what kind of piece it is from how it reads.
-- Hopeful/toiling clichés framing effort as a triumph ("it took an afternoon to get right, it took two months to get wrong" — style constructions like this read as performative struggle, not genuine voice, unless the corpus actually does this).
-- Presenting a sequence of changes as a flat list ("first we added X, then Y, then Z") when the corpus's actual pattern is each addition answering a *distinctly different question* than the last — make that difference explicit instead of just sequencing them.
-- Assuming headings should all be either purely descriptive or all playful without checking the real ratio in the corpus.
-- Ending with a generic recap ("in summary, we built..."). Match the chosen type's non-recap closing convention instead (what the design explicitly does *not* guarantee for Narrative Feature Writeup; a real boundary condition for Conceptual Essay, not a taxonomy of the piece's own doctrine — see `references/writing-types.md`).
-- Adding real length to a long piece by padding existing sections with restated aphorisms or a fourth re-explanation of the same mechanism, instead of finding a genuinely new piece of grounding material (a distinct mechanism in the codebase, a distinct citation) and giving it its own section. Length that comes from repetition reads as padding no matter how well the sentences are polished; length that comes from a new real example reads as depth.
+- Skipping Step 0, or picking a type from habit instead of the actual signals in `references/type-index.md` — including code and real names in a piece that asked for heavy sanitization, or the reverse.
+- Drafting from a generic outline before doing Step 1 and Step 2. Outline-first produces structure that has to be torn down once real grounding and real voice are checked.
+- Meta-narrative throat-clearing about the piece itself ("what follows is...", "this is an examination of..."). Jump into the subject; let the reader infer the shape from how it reads.
+- Ending with a generic recap. Each type file states its own non-recap closing convention — use that instead.
+- Inflating a long piece's length with a restated aphorism or a repeated re-explanation of the same point/mechanism, instead of finding genuinely new grounding material and giving it its own section. Length from repetition reads as padding regardless of how well the sentences are polished; length from a new real example reads as depth.
+
+Type-specific common mistakes (e.g. the Conceptual Essay's absolute-claim trap, or the Academic type's genre-convention-vs-tell distinction) live in each type's own file, not here — check the chosen type file's guidance directly rather than assuming this list is exhaustive.
 
 ## Long-form pacing and accessibility
 
-For a piece long enough to be a 20+ minute read, dense argument paragraphs need occasional breathing room. Insert short (1–2 sentence) standalone interludes between heavier sections — set off as a blockquote, not a heading — that reset the reader without restating what was just covered or previewing what's next in detail. Space them roughly every 3–4 sections, not every section; overuse turns the device into its own tic and defeats the purpose. An interlude is a beat, not a summary and not a transition sentence dressed up as one.
+For a piece long enough to be a 20+ minute read, dense argument paragraphs need occasional breathing room, regardless of type. Insert short (1–2 sentence) standalone interludes between heavier sections — plain paragraphs, not a device that turns into its own tic if overused — spaced roughly every 3–4 sections. An interlude is a beat, not a summary and not a transition sentence dressed up as one.
 
-If the piece is meant to be readable by someone technical-but-not-expert (ask if unclear), gloss unfamiliar jargon inline the first time it appears — a short parenthetical, not a footnote or a dedicated sentence — rather than assuming the term is already known. Where a concept has a well-known name or origin (a named pattern, a coined term, a classic essay), anchor-link it to its canonical source (Wikipedia, the original post that coined it, official docs) rather than re-explaining it from scratch; this matches the corpus's own habit of linking out to primary references instead of restating them.
+If the piece is meant to be readable by someone technical-but-not-expert, gloss unfamiliar jargon inline the first time it appears (a short parenthetical, not a footnote), and anchor-link a concept that has a well-known name or origin to its canonical source rather than re-explaining it from scratch.
 
 ## Additional resources
 
-- `references/writing-types.md` — the registry of supported composition types (currently Narrative Feature Writeup and Conceptual Essay), each with its own structure, evidence/code/citation policy, sanitization level, and closing convention. Append a new type here rather than improvising a third shape inline — an academic writeup, a formal proposal, or any other recurring shape belongs here once it's actually needed, not before.
-- `references/style-corpus.md` — how to structure the voice-calibration analysis once source pieces are fetched, and the categories of pattern to extract. Applies regardless of chosen type.
-- `references/anti-formulaic-writing.md` — the concrete, ever-growing list of formulaic and AI-typical writing patterns to screen every draft against before presenting it. Applies regardless of chosen type or subject matter — the patterns it names (reflexive negation pivots, mic-drop paragraph endings, "most systems/most people" contrast openers, symmetrical binary comparisons, and more) are generic tells, not technical-writing-specific ones.
+**Type files** (`references/`) — read `type-index.md` first, then exactly the one (or few, for a cross-mix) type file the request needs:
+
+- `type-index.md` — the dispatcher: signals for each registered type, and guidance for a request that genuinely wants a blend of two types.
+- `type-narrative-feature.md` — a technical story with a chronological arc, code included, light sanitization.
+- `type-conceptual-essay.md` — an opinionated, concept-by-concept infodump with no chronological arc, no code, heavy sanitization.
+- `type-academic-thesis.md` — a formal manuscript chapter governed by an institutional guideline, in any language, with no author voice to calibrate.
+- `type-template.md` — copy-paste template for registering a new type.
+
+**Shared references** (apply regardless of chosen type):
+
+- `anti-formulaic-writing.md` — the concrete, ever-growing checklist of formulaic and AI-typical writing patterns to screen every draft against.
+- `style-corpus.md` — how to structure a voice-calibration analysis once source pieces are fetched.
+- `platform-metadata.md` — subtitle shape, tag conventions, and cover/inline image placement rules for publishing.
+- `review-and-audit.md` — the second entry point: reviewing, auditing, or revising a piece that already exists, including one this skill didn't draft. Covers report-only vs. fix-authorized scope, respecting an existing project style guide, delegating a large audit, applying an external critique, and running a holistic pass distinct from a checklist pass.
+
+**Examples** (`examples/`) — illustrative material fetched on demand, not loaded by default:
+
+- `subtitle-patterns.md` — verbatim confirmed subtitle examples and their shape breakdown.

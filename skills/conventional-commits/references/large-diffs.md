@@ -81,4 +81,4 @@ Header: fix: resolve security vulnerabilities in error paths
 
 ## Mixed Concerns
 
-If the staged changes hold unrelated concerns, still write one header for the dominant change. Tell the user once that the changes could split into separate commits. Do not split unless the user asks.
+If the staged changes hold unrelated concerns, still write one header for the dominant change and commit. After the commit, add one sentence saying that the changes could split into separate commits. Do not split unless the user asks.

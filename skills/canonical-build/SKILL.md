@@ -14,11 +14,14 @@ Build the real thing once, and do not build machinery that is not the product. T
 
 Before you apply either policy, find the declared environment. Read the project `CLAUDE.md` and its docs for development, pre-production, or production. If the project declares none, treat it as pre-production. Ask the user before you delete anything that touches persisted data.
 
-| Environment | Policy A: canonical shape |
-|---|---|
-| Development, no persisted data | Full hard cut. Delete old shapes. Add no shims and no rejection tests. |
-| Pre-production | Hard cut internal code and fixtures. Keep any shape that stored data or another service still uses, until a planned migration moves it. |
-| Production or live data | Do not hard cut stored or wire shapes. Use a planned migration with a rollback step. Add the new shape, move the data, and remove the old shape in a later change. Hard cut still applies to purely internal code. |
+Policy A depends on the environment:
+
+- Development, no persisted data
+  - Full hard cut. Delete old shapes. Add no shims and no rejection tests.
+- Pre-production
+  - Hard cut internal code and fixtures. Keep any shape that stored data or another service still uses, until a planned migration moves it.
+- Production or live data
+  - Do not hard cut stored or wire shapes. Use a planned migration with a rollback step. Add the new shape, move the data, and remove the old shape in a later change. Hard cut still applies to purely internal code.
 
 Policy B applies in every environment. Locks and records that protect live systems are not bookkeeping. A deploy lock or a migration lock stops two runs from corrupting live data. Keep them.
 

@@ -1,6 +1,6 @@
 # Canonical Shape Reference
 
-This file holds the details of Policy A. The rules and the environment table are in `SKILL.md`.
+This file holds the details of Policy A. The rules and the environment list are in `SKILL.md`.
 
 ## Review Checklist
 

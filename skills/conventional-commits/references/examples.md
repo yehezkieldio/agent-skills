@@ -1,94 +1,152 @@
 # Worked Examples
 
-Each example shows the input, the reasoning, and the header.
+Each example shows the input, the reasoning, and the result. Headers aim for 50 characters or fewer.
 
-## Features and Fixes
+## Headers
 
 **Feature in a workspace crate**
 Input: added a `Token` struct with validation in `christina-core/src/auth/token.rs`.
-Reasoning: new capability gives `feat`. The crate `christina-core` gives `core`, but the inner module `auth` is more precise.
-Header: `feat(auth): add token validation with expiry checking`
+Reasoning: new capability gives `feat`. The crate gives `core`, but the inner module `auth` is more precise.
+Header: `feat(auth): add token expiry validation`
 
 **Bug fix across several files**
-Input: fixed a race condition in the database connection pool, and removed an unused mutex in the cache.
-Reasoning: bug fix gives `fix`. The primary module is the database, so the scope is `db`.
-Header: `fix(db): resolve race condition in connection pool`
-
-**Fix with a named defect**
-Input: `let x = vec![]` replaced by `Vec::new()` in `src/memory/alloc.rs`, correcting an allocation.
-Reasoning: corrects incorrect behavior, so `fix`. Module `memory`.
-Header: `fix(memory): replace vec![] with Vec::new for correct allocation`
-
-## Maintenance
+Input: fixed a race in the connection pool, and removed an unused mutex in the cache.
+Reasoning: bug fix gives `fix`. The primary module is the database.
+Header: `fix(db): resolve race in connection pool`
 
 **Dependency bump**
 Input: bumped tokio from 1.38 to 1.49 in `Cargo.toml`, then ran `cargo update`.
-Reasoning: a dependency change gives `chore`. The file is `Cargo.toml`, so the scope is `deps`.
+Reasoning: a dependency change gives `chore` with scope `deps`.
 Header: `chore(deps): bump tokio to 1.49`
 
 **Configuration files**
 Input: changed `max_width` in `rustfmt.toml` and the indent in `.editorconfig`.
 Reasoning: tooling configuration gives `chore` with scope `config`.
-Header: `chore(config): set max_width in rustfmt and indent in editorconfig`
+Header: `chore(config): align rustfmt and editorconfig`
 
 **Build tooling**
-Input: `justfile` gained a new test command. No source change.
-Reasoning: build tooling gives `build`.
+Input: `justfile` gained a nextest command. No source change.
 Header: `build: add nextest run command to justfile`
 
-## Pipelines
-
-**Release workflow**
+**Pipeline**
 Input: added `.github/workflows/release.yml`.
-Reasoning: pipeline configuration gives `ci`. Do not repeat `ci` as the scope.
+Reasoning: pipeline configuration gives `ci`. The type is not repeated as the scope.
 Header: `ci: add release workflow`
-
-**New lint job**
-Input: `.github/workflows/ci.yml` gained a clippy job.
-Reasoning: `ci`, with no scope.
-Header: `ci: add clippy lint job`
-
-## Other Types
 
 **Measured performance gain**
 Input: replaced a `HashMap` with a `Vec` lookup in a hot path, cutting p99 latency by 40 percent.
-Reasoning: a measured gain gives `perf`. Module `parser`.
-Header: `perf(parser): replace HashMap with Vec in hot-path lookup`
+Header: `perf(parser): replace HashMap with Vec in hot path`
 
 **Test-only change**
-Input: added integration tests for the token refresh flow.
-Reasoning: tests only give `test`. Module `auth`.
-Header: `test(auth): add integration tests for token refresh`
+Header: `test(auth): add token refresh integration tests`
 
 **Security hardening**
-Input: added input sanitization for user-supplied commit context, to block prompt injection.
-Reasoning: a security measure gives `security`. Module `prompt`.
+Input: sanitized user-supplied commit context to block prompt injection.
 Header: `security(prompt): sanitize user context input`
 
-**Restructure with a name**
-Input: `christina-core/src/prompt.rs` rewritten with new prompt templates.
-Reasoning: no external behavior change gives `refactor`. The inner module `prompt` is more precise than the crate `core`.
-Header: `refactor(prompt): rewrite commit message prompt templates`
+**Restructure**
+Input: `christina-core/src/prompt.rs` rewritten with new templates.
+Reasoning: no external behavior change gives `refactor`. The inner module `prompt` beats the crate `core`.
+Header: `refactor(prompt): rewrite commit prompt templates`
 
-## Breaking Change
-
+**Breaking change**
 Input: removed the v1 routes from the API.
-Reasoning: removes public behavior, so add `!`.
 Header: `feat(api)!: drop v1 routes`
 
-## With Issue Context
+## History Shaped the Result
 
-Input: the user says "this fixes #482", and the change resolves the token refresh loop.
-Reasoning: `fix` type, real issue number, so add a `Fixes` footer.
+Input: `git log --no-merges -5 --format=%s` shows five subjects such as `fix(web): ...`, `feat(web): ...`, and `chore(api): ...`. The change touches `apps/web/src/cart/`.
+Reasoning: history is consistently conventional, and it uses app names as scopes, not module names. Use `web`.
+Header: `fix(web): stop cart total rounding at checkout`
+
+Input: the last five subjects are "wip", "fix stuff", "Update README", "more changes", and "merge fixes".
+Reasoning: history is mixed and not conventional. Ignore it and apply the skill rules.
+
+## Header With a Footer
+
+Input: the branch is `fix/482-token-loop`, and the user said the change closes the bug.
+Reasoning: `fix` type, a real issue number from the branch and the user, so add a `Fixes` footer. No body, so the footer follows the header after one blank line.
 
 ```
-fix(auth): resolve token refresh loop on expired session
+fix(auth): stop token refresh retry loop on 401
 
 Fixes #482
 ```
 
-## Multi-Theme Diff
+Input: the session implemented an issue and referenced a related pull request.
 
-Input: six files in a user roles system, four files in a database migration, two files in test utilities.
-Reasoning: the roles theme has the most files. Its type is `feat`. The themes do not share a scope, so omit it.
-Header: `feat: implement user roles system`
+```
+feat(export): add CSV export for orders
+
+Closes #311
+Related-PR: #318
+```
+
+## Header With a Body
+
+The user asked for a body. Take the facts from the session.
+
+```
+fix(auth): stop token refresh retry loop on 401
+
+An expired session made the client call /refresh, get a 401, and call
+/refresh again with no limit. Each retry reset the backoff timer, so
+the client sent one request every 200 ms until the tab closed.
+
+Clear the session on the first 401 and return to the sign-in screen.
+Callers that relied on the silent retry now see a sign-in prompt.
+
+Fixes #482
+```
+
+A feature with a stated limit:
+
+```
+feat(export): add CSV export for orders
+
+Support asked for a way to pull a month of orders into a spreadsheet.
+The export streams rows from a database cursor, so memory stays flat
+for large ranges.
+
+Exports over 100000 rows return 413. A background job for those is a
+follow-up.
+
+Closes #311
+```
+
+A refactor with a trade-off and no footer:
+
+```
+refactor(cache): extract eviction module
+
+The cache file mixed lookup, expiry, and eviction, and every edit to
+the eviction rules touched the lookup path. Move eviction behind one
+evict() call so the rules change in one place.
+
+The extra call adds one function hop per write. Benchmarks show no
+change beyond noise.
+```
+
+## Breaking Change With a Note
+
+```
+feat(api)!: drop v1 routes
+
+BREAKING CHANGE: clients must call /v2/*. The /v1/* routes return 410.
+```
+
+## Message Only
+
+The user said "just give me the message". Present the message in a code block and add nothing else. Do not run `git commit`.
+
+```
+chore(deps): bump tokio to 1.49
+```
+
+## After Committing
+
+Report one line and stop.
+
+```
+a1b2c3d fix(auth): stop token refresh retry loop on 401
+```
